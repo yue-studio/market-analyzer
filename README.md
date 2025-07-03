@@ -161,6 +161,8 @@ market-analyzer/
 ├── reddit_analysis.py      # Functions for fetching and analyzing Reddit data
 ├── get_top_headlines.py    # Script to fetch and display top news headlines (CLI/Streamlit)
 └── tests/
-    ├── test_analysis.py    # Unit tests for analysis.py
-    └── test_market_data.py # Unit tests for market_data.py
+    ├── test_analysis.py          # Unit tests for analysis.py
+    ├── test_market_data.py       # Unit tests for market_data.py
+    ├── test_get_top_headlines.py # Unit tests for get_top_headlines.py
+    └── test_reddit_analysis.py   # Unit tests for reddit_analysis.py
 ```
