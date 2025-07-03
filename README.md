@@ -21,7 +21,7 @@ This project provides a comprehensive market analysis tool written in Python. It
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/market-analyzer.git
+    git clone https://github.com/yue-studio/market-analyzer.git
     cd market-analyzer
     ```
 
