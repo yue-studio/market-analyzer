@@ -1,0 +1,12 @@
+yfinance
+rich
+prettytable
+requests
+pandas
+talib
+xmltodict
+pytz
+matplotlib
+Pillow
+newsapi-python
+streamlit
