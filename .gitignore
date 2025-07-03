@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+
+# Virtual environment
+virtualenv/
+virtual-env/
+virtual_env/
+virtualenv-2.7/
+virtualenv-3.4/
+virtualenv-3.5/
+virtualenv-3.6/
+virtualenv-3.7/
+virtualenv-3.8/
+virtualenv-3.9/
+virtualenv-3.10/
+virtualenv-3.11/
+virtualenv-3.12/
+venc/
+env/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS generated files
+.DS_Store
+thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Financial data (if any are saved locally)
+*.csv
+*.xlsx
+*.json
+
+# TA-Lib build files
+ta-lib/
+TA_Lib-*
+
+# Configuration files (sensitive info)
+config.py
