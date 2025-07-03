@@ -34,6 +34,16 @@ def get_reddit_instance():
         debug_print(f"Error initializing PRAW: {e}")
         return None
 
+def _get_stock_price(symbol: str) -> float:
+    """Helper function to get the last closing price of a stock."""
+    try:
+        quote = yf.Ticker(symbol).history(interval="1m", period = "1d")
+        price = quote['Close'].iloc[-1]
+        return price
+    except (KeyError, ValueError, ZeroDivisionError, IndexError, TypeError) :
+        debug_print(f"Could not fetch price for {symbol}")
+        return 0.0
+
 def get_top_mentioned_stocks_with_sentiment():
     """
     Fetches top mentioned stocks from wallstreetbets and performs sentiment analysis.
@@ -70,29 +80,13 @@ def get_top_mentioned_stocks_with_sentiment():
                    senti[w]['pos'] = s['pos']
                    senti[w]['compound'] = s['compound']
 
-    junkWords = ['WSB','YOLO','TO','RH','AM','ER','OP','GO','CEO','SEC','YOU','AND','HAVE','THEY','FOMO','TAKE','FUD','USA','CNBC','BUY','FIRE','WE', \
-                 'THE','ON','IS','IN','IM','BUT','FOR', 'ARE','BE','KING', 'HF', 'DFV', 'DD', 'IT', 'HOLD','OF','US','MY','LETS','GET','BACK','WEED', \
-                 'STOP','THAT','THIS','DO','NOT','FUCK','GANG','ALL','RIP','OTM','IV','ETF','SPDR','RIES','FTD','HSA','LIKE','HIS','SHIT','IF','HANG','SAID', \
-                 'HERE','IKES','HING','HE','TD','JUST','HE','TD','JUST','YES','WHAT','TILL','AS','VLAD','TOCK','WHY','TING','NO','OR','WHO','ANDS','MOND', \
-                 'HOLY','YOUR','LOL','OH','DTCC','GUAM','ME','DONT','WITH','GOT','TIME','AOC','OULD','LLED','TION','TV','WAS','MORE','OING','HAS','WANT','BS', \
-                 'DVF','NLP','IPO','TARD','USE','PLR','FED','SELL','UP','USD','KEEP','WILL','AH','ROPE','CKIN','MEGA','JPOW','READ','IGHT','THER','EU','DOWN', \
-                 'VW','FD','CFO','DIP','ARK','EGME','HEIR','DING','APES','UGHT','MOON','EOD','DID','DIES','NYSE','HERS','SOLD','HODL','COME','OUR','FROM','APE', \
-                 'YING','DIPS','WHEN','RENT','ZERO','KNOW','HORT','LAST','LING','MING','TANT','ABLE','OVER','LIFT','EASE','BY','NING','RKET','CANT','ITS','RDAY','VIA', \
-                 'SNL','OOOO','DATA','NOW','STAY','OWED','ONLY','APER','NGER','ODER','ORTS','THAN','OK','ALLS','OCKS','SDAQ','AUSE','OUT','LET','ODAY','GING','IMIT','CASH', \
-                 'SEE','ALEX','LOVE','VOTE','MF','WERE','OMG','BOYS','GOD','RAIN','GIVE','HAND','DOOM','RED','PC','WAY','CISE','VERY','ITM','EVER','ONE','HES', \
-                 'RE','INTO','MM','ITED','RINK','PTSD','FREE','CAP','AN','NUVO','GUYS','MAKE','LMAO','THEM','VWAP','LION','SSR','CKET','UK','HOW','ETC','TLDR','WTF', \
-                 'ODOR','OASS','WARS','HINK','TUFF','TREK','BEST','STAR','XYZ','BAN','GOOD','EADY','CUM','ASS','TITS','POOP','COCK','UI','ATM','NJ','YTD', 'OPEN', \
-                 'PM','TA','BEEN','AT','LEFT','MOVE','SAME','MANY','EACH','FORE','HIGH','OLD','CAN','RICE','BIG','RTED','DAY','GAIN','DMV','HEAD','RONG','NEED','BABY','AVIN', \
-                 'LVIN','SALE','CNN','FPS','OTC','BUYS','AINT','EIP','PFOF','MACD','MENT','LONG','IVY','WAIT','VP','AMES','TONK','HLDG','MOLY','PMI','DJI','DTE','EV','OS','CAD', \
-                 'QNX','RYAN','OHEN','VIX','RMAN','CKED','NUAL','ATED','FMR','OG','NFL','IRA','FUK','QNX','XO','PR','RONK','LSD','PPI','OFF','MOLE','LFG','DA','RULE','EOW','CCP',\
-                 'SAYS','IRS','WFP','UN','GDP','GAS','MBS','CPI','FBI','MADE','NFT','EOM','PCE','AI','MLK','LICK','INGS','IRAN','PE', 'FOMC', 'SPX', 'HANK','OOGL', 'ATH', 'BBB']
+    junkWords = ['WSB', 'YOLO', 'TO', 'RH', 'AM', 'ER', 'OP', 'GO', 'CEO', 'SEC', 'YOU', 'AND', 'HAVE', 'THEY', 'FOMO', 'TAKE', 'FUD', 'USA', 'CNBC', 'BUY', 'FIRE', 'WE', 'THE', 'ON', 'IS', 'IN', 'IM', 'BUT', 'FOR', 'ARE', 'BE', 'KING', 'HF', 'DFV', 'DD', 'IT', 'HOLD', 'OF', 'US', 'MY', 'LETS', 'GET', 'BACK', 'WEED', 'STOP', 'THAT', 'THIS', 'DO', 'NOT', 'FUCK', 'GANG', 'ALL', 'RIP', 'OTM', 'IV', 'ETF', 'SPDR', 'RIES', 'FTD', 'HSA', 'LIKE', 'HIS', 'SHIT', 'IF', 'HANG', 'SAID', 'HERE', 'IKES', 'HING', 'HE', 'TD', 'JUST', 'HE', 'TD', 'JUST', 'YES', 'WHAT', 'TILL', 'AS', 'VLAD', 'TOCK', 'WHY', 'TING', 'NO', 'OR', 'WHO', 'ANDS', 'MOND', 'HOLY', 'YOUR', 'LOL', 'OH', 'DTCC', 'GUAM', 'ME', 'DONT', 'WITH', 'GOT', 'TIME', 'AOC', 'OULD', 'LLED', 'TION', 'TV', 'WAS', 'MORE', 'OING', 'HAS', 'WANT', 'BS', 'DVF', 'NLP', 'IPO', 'TARD', 'USE', 'PLR', 'FED', 'SELL', 'UP', 'USD', 'KEEP', 'WILL', 'AH', 'ROPE', 'CKIN', 'MEGA', 'JPOW', 'READ', 'IGHT', 'THER', 'EU', 'DOWN', 'VW', 'FD', 'CFO', 'DIP', 'ARK', 'EGME', 'HEIR', 'DING', 'APES', 'UGHT', 'MOON', 'EOD', 'DID', 'DIES', 'NYSE', 'HERS', 'SOLD', 'HODL', 'COME', 'OUR', 'FROM', 'APE', 'YING', 'DIPS', 'WHEN', 'RENT', 'ZERO', 'KNOW', 'HORT', 'LAST', 'LING', 'MING', 'TANT', 'ABLE', 'OVER', 'LIFT', 'EASE', 'BY', 'NING', 'RKET', 'CANT', 'ITS', 'RDAY', 'VIA', 'SNL', 'OOOO', 'DATA', 'NOW', 'STAY', 'OWED', 'ONLY', 'APER', 'NGER', 'ODER', 'ORTS', 'THAN', 'OK', 'ALLS', 'OCKS', 'SDAQ', 'AUSE', 'OUT', 'LET', 'ODAY', 'GING', 'IMIT', 'CASH', 'SEE', 'ALEX', 'LOVE', 'VOTE', 'MF', 'WERE', 'OMG', 'BOYS', 'GOD', 'RAIN', 'GIVE', 'HAND', 'DOOM', 'RED', 'PC', 'WAY', 'CISE', 'VERY', 'ITM', 'EVER', 'ONE', 'HES', 'RE', 'INTO', 'MM', 'ITED', 'RINK', 'PTSD', 'FREE', 'CAP', 'AN', 'NUVO', 'GUYS', 'MAKE', 'LMAO', 'THEM', 'VWAP', 'LION', 'SSR', 'CKET', 'UK', 'HOW', 'ETC', 'TLDR', 'WTF', 'ODOR', 'OASS', 'WARS', 'HINK', 'TUFF', 'TREK', 'BEST', 'STAR', 'XYZ', 'BAN', 'GOOD', 'EADY', 'CUM', 'ASS', 'TITS', 'POOP', 'COCK', 'UI', 'ATM', 'NJ', 'YTD', 'OPEN', 'PM', 'TA', 'BEEN', 'AT', 'LEFT', 'MOVE', 'SAME', 'MANY', 'EACH', 'FORE', 'HIGH', 'OLD', 'CAN', 'RICE', 'BIG', 'RTED', 'DAY', 'GAIN', 'DMV', 'HEAD', 'RONG', 'NEED', 'BABY', 'AVIN', 'LVIN', 'SALE', 'CNN', 'FPS', 'OTC', 'BUYS', 'AINT', 'EIP', 'PFOF', 'MACD', 'MENT', 'LONG', 'IVY', 'WAIT', 'VP', 'AMES', 'TONK', 'HLDG', 'MOLY', 'PMI', 'DJI', 'DTE', 'EV', 'OS', 'CAD', 'QNX', 'RYAN', 'OHEN', 'VIX', 'RMAN', 'CKED', 'NUAL', 'ATED', 'FMR', 'OG', 'NFL', 'IRA', 'FUK', 'QNX', 'XO', 'PR', 'RONK', 'LSD', 'PPI', 'OFF', 'MOLE', 'LFG', 'DA', 'RULE', 'EOW', 'CCP', 'SAYS', 'IRS', 'WFP', 'UN', 'GDP', 'GAS', 'MBS', 'CPI', 'FBI', 'MADE', 'NFT', 'EOM', 'PCE', 'AI', 'MLK', 'LICK', 'INGS', 'IRAN', 'PE', 'FOMC', 'SPX', 'HANK', 'OOGL', 'ATH', 'BBB', 'BLS']
 
     results = {}
     for w in sorted(d, key=d.get, reverse=True):
         if ((w not in junkWords) and (d[w] > 5)):
            try:
-             quote = yf.Ticker(w).history(interval="1m", period = "1d")
-             price = quote['Close'].iloc[-1]
+             price = _get_stock_price(w)
              results[w] = {
                  'mentions': d[w],
                  'neg': senti[w]['neg'],

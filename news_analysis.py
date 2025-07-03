@@ -36,6 +36,19 @@ def get_sentiment_score(text: str) -> dict:
     sentiment = sia.polarity_scores(text)
     return sentiment
 
+def _get_news_articles(newsapi, query: str, from_date: str, max_articles: int):
+    """Helper to fetch articles from NewsAPI."""
+    if query:
+        return newsapi.get_everything(
+            q=query,
+            from_param=from_date,
+            language='en',
+            sort_by='relevancy',
+            page_size=max_articles
+        )
+    else:
+        return newsapi.get_top_headlines(language='en', page_size=max_articles)
+
 def analyze_news_sentiment(query: str, days_ago: int = 7, max_articles: int = 10) -> pd.DataFrame:
     """
     Fetches news articles related to a query, performs sentiment analysis,
@@ -53,24 +66,17 @@ def analyze_news_sentiment(query: str, days_ago: int = 7, max_articles: int = 10
     if not newsapi:
         return pd.DataFrame()
 
-    all_articles = []
     sentiment_data = []
 
     from_date = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
     debug_print(f"Searching news for '{query}' from {from_date} with max {max_articles} articles.")
 
     try:
-        # Fetch articles
-        articles = newsapi.get_everything(
-            q=query,
-            from_param=from_date,
-            language='en',
-            sort_by='relevancy',
-            page_size=max_articles
-        )
-        debug_print(f"Found {articles['totalResults']} articles for '{query}'. Processing up to {max_articles}.")
+        articles_response = _get_news_articles(newsapi, query, from_date, max_articles)
+        articles = articles_response.get('articles', [])
+        debug_print(f"Found {articles_response.get('totalResults', 0)} articles for '{query}'. Processing up to {max_articles}.")
 
-        for article in articles['articles']:
+        for article in articles:
             title = article.get('title', '')
             description = article.get('description', '')
             url = article.get('url', '')

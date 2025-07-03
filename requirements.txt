@@ -10,3 +10,4 @@ matplotlib
 Pillow
 newsapi-python
 streamlit
+feedparser

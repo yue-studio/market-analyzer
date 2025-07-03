@@ -7,7 +7,7 @@ It can also search for news based on a stock symbol.
 
 import argparse
 import streamlit as st
-from news_analysis import initialize_newsapi
+from news_analysis import initialize_newsapi, _get_news_articles
 from utils import console
 
 def run_streamlit_app(symbol=None):
@@ -26,11 +26,8 @@ def run_streamlit_app(symbol=None):
         return
 
     try:
-        if symbol:
-            top_headlines = newsapi.get_everything(q=symbol, language='en', sort_by='relevancy', page_size=10)
-        else:
-            top_headlines = newsapi.get_top_headlines(language='en', page_size=10)
-        articles = top_headlines.get('articles', [])
+        articles_response = _get_news_articles(newsapi, symbol, None, 10) # from_date is not used for top headlines
+        articles = articles_response.get('articles', [])
 
         if not articles:
             st.warning("No top headlines found.")
@@ -55,11 +52,8 @@ def run_cli(symbol=None):
         return
 
     try:
-        if symbol:
-            top_headlines = newsapi.get_everything(q=symbol, language='en', sort_by='relevancy', page_size=10)
-        else:
-            top_headlines = newsapi.get_top_headlines(language='en', page_size=10)
-        articles = top_headlines.get('articles', [])
+        articles_response = _get_news_articles(newsapi, symbol, None, 10) # from_date is not used for top headlines
+        articles = articles_response.get('articles', [])
 
         if not articles:
             console.print("[bold yellow]No top headlines found.[/bold yellow]")
@@ -79,7 +73,7 @@ def run_cli(symbol=None):
     except Exception as e:
         console.print(f"[bold red]Error fetching top headlines: {e}[/bold red]")
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Fetch top news headlines.")
     parser.add_argument("--mode", choices=["streamlit", "cli"], default="cli", help="The mode to run the script in.")
     parser.add_argument("--symbol", help="The stock symbol to search for news.")
@@ -89,3 +83,6 @@ if __name__ == "__main__":
         run_streamlit_app(args.symbol)
     else:
         run_cli(args.symbol)
+
+if __name__ == "__main__":
+    main()

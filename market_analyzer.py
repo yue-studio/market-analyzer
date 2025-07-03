@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--reddit-analysis", action="store_true", help="Perform Reddit sentiment analysis.")
     parser.add_argument("-a", "--plot-all", action="store_true", help="Plot both VIX ratio and technical indicators.")
     parser.add_argument("-n", "--news-analysis", action="store_true", help="Perform news sentiment analysis.")
+    parser.add_argument("-c", "--cnbc-analysis", action="store_true", help="Perform CNBC sentiment analysis.")
     parser.add_argument("-e", "--export-data", action="store_true", help="Export analysis results to CSV/JSON files.")
     parser.add_argument("-top", "--top-headlines", action="store_true", help="Print the top 10 news headlines.")
     args = parser.parse_args()
@@ -191,8 +192,45 @@ if __name__ == "__main__":
                     row['URL']
                 )
             console.print(table)
+            console.print("\n[bold]Sentiment Scores Explanation:[/bold]")
+            console.print("- [bold]Neg[/bold]: Negative sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Neu[/bold]: Neutral sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Pos[/bold]: Positive sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Compound[/bold]: Compound (normalized, weighted composite) score (-1.0 to 1.0, where 1.0 is most positive and -1.0 is most negative)")
         else:
             console.print(f"[bold red]No news articles found or error during news analysis for {analyzer.ticker}.[/bold red]")
+
+    if args.cnbc_analysis:
+        console.print("[bold cyan]CNBC Sentiment Analysis[/bold cyan]")
+        from cnbc_analysis import analyze_cnbc_sentiment
+        cnbc_df = analyze_cnbc_sentiment()
+
+        if not cnbc_df.empty:
+            table = Table(title="CNBC News Sentiment")
+            table.add_column("Title", style="cyan")
+            table.add_column("Neg", justify="right", style="red")
+            table.add_column("Neu", justify="right", style="yellow")
+            table.add_column("Pos", justify="right", style="green")
+            table.add_column("Compound", justify="right", style="blue")
+            table.add_column("URL", style="dim")
+
+            for index, row in cnbc_df.iterrows():
+                table.add_row(
+                    row['Title'],
+                    f"{row['Neg']:.2f}",
+                    f"{row['Neu']:.2f}",
+                    f"{row['Pos']:.2f}",
+                    f"{row['Compound']:.2f}",
+                    row['URL']
+                )
+            console.print(table)
+            console.print("\n[bold]Sentiment Scores Explanation:[/bold]")
+            console.print("- [bold]Neg[/bold]: Negative sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Neu[/bold]: Neutral sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Pos[/bold]: Positive sentiment score (0.0 to 1.0)")
+            console.print("- [bold]Compound[/bold]: Compound (normalized, weighted composite) score (-1.0 to 1.0, where 1.0 is most positive and -1.0 is most negative)")
+        else:
+            console.print("[bold red]No articles found or error during CNBC analysis.[/bold red]")
 
     if args.plot_vix_ratio or args.plot_all:
         vix_plot_filename = None
