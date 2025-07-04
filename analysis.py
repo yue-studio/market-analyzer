@@ -204,6 +204,10 @@ class MarketAnalyzer:
             console.print(f"  R1: [green]{r1:.2f}[/green], S1: [red]{s1:.2f}[/red]")
             console.print(f"  R2: [green]{r2:.2f}[/green], S2: [red]{s2:.2f}[/red]")
             console.print(f"  R3: [green]{r3:.2f}[/green], S3: [red]{s3:.2f}[/red]")
+            console.print("\n[bold]Pivot Points Explanation:[/bold]")
+            console.print("- [bold]PP[/bold]: Pivot Point - The primary support/resistance level.")
+            console.print("- [bold]R1, R2, R3[/bold]: Resistance levels 1, 2, and 3. Potential price ceilings.")
+            console.print("- [bold]S1, S2, S3[/bold]: Support levels 1, 2, and 3. Potential price floors.")
             debug_print("Pivot points calculated and displayed.")
             self.results['pivot_points'] = {
                 'PP': pp, 'R1': r1, 'S1': s1, 'R2': r2, 'S2': s2, 'R3': r3, 'S3': s3
@@ -297,6 +301,14 @@ class MarketAnalyzer:
             tech_indicators_data['ADX_14'] = adx[-1]
         
         console.print(table)
+        console.print("\n[bold]Technical Indicators Explanation:[/bold]")
+        console.print("- [bold]SMA (50/200)[/bold]: Simple Moving Average over 50/200 periods. Shows average price over time.")
+        console.print("- [bold]EMA (50/200)[/bold]: Exponential Moving Average over 50/200 periods. Gives more weight to recent prices.")
+        console.print("- [bold]RSI (14)[/bold]: Relative Strength Index over 14 periods. Measures the speed and change of price movements (momentum).")
+        console.print("- [bold]MACD[/bold]: Moving Average Convergence Divergence. Shows the relationship between two moving averages of a security’s price.")
+        console.print("- [bold]Bollinger Bands[/bold]: Volatility bands placed above and below a simple moving average. Upper, Middle, and Lower bands.")
+        console.print("- [bold]Stochastic %K/%D[/bold]: Momentum indicators comparing a particular closing price of a security to a range of its prices over a certain period of time.")
+        console.print("- [bold]ADX (14)[/bold]: Average Directional Index over 14 periods. Measures the strength of a trend.")
         debug_print("Technical indicators calculation complete.")
         self.results['technical_indicators'] = pd.DataFrame([tech_indicators_data])
 
