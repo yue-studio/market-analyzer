@@ -1,17 +1,10 @@
-"""td_api_ironfly.py
+"""
 
 This is the main script to run the market analysis.
 It uses the MarketAnalyzer class from the analysis module to perform
 ironfly strategy analysis, market indicator analysis, and bond yield analysis.
 
-Usage:
-  python3 td_api_ironfly.py [--ticker TICKER] [--wings WINGS]
-
-Arguments:
-  --ticker TICKER  The main ticker to analyze (e.g., $SPX.X, SPY). Default is $SPX.X.
-  --wings WINGS    The width of the ironfly wings. Default is 50.
 """
-
 import argparse
 from analysis import MarketAnalyzer
 from utils import console
@@ -21,88 +14,15 @@ import matplotlib
 matplotlib.use('TkAgg') # Explicitly set the backend
 from rich.table import Table
 from rich.progress import Progress, track
-
-# Install yfinance if it's not already installed
-try:
-    import yfinance as yf
-except ImportError:
-    console.print("yfinance not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'yfinance'])
-    import yfinance as yf
-
-# Install rich if it's not already installed
-try:
-    from rich.console import Console
-except ImportError:
-    console.print("rich not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'rich'])
-    from rich.console import Console
-
-# Install prettytable if it's not already installed
-try:
-    from prettytable import from_html
-except ImportError:
-    console.print("prettytable not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'prettytable'])
-    from prettytable import from_html
-
-# Install requests if it's not already installed
-try:
-    import requests
-except ImportError:
-    console.print("requests not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'requests'])
-    import requests
-
-# Install pandas if it's not already installed
-try:
-    import pandas as pd
-except ImportError:
-    console.print("pandas not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'pandas'])
-    import pandas as pd
-
-# Install praw if it's not already installed
-try:
-    import praw
-except ImportError:
-    console.print("praw not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'praw'])
-    import praw
-
-# Install vaderSentiment if it's not already installed
-try:
-    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-except ImportError:
-    console.print("vaderSentiment not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'vaderSentiment'])
-    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-# Install newsapi-python if it's not already installed
-try:
-    from newsapi import NewsApiClient
-except ImportError:
-    console.print("newsapi-python not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'newsapi-python'])
-    from newsapi import NewsApiClient
-
-# Install TA-Lib if it's not already installed
-try:
-    import talib
-except ImportError:
-    console.print("TA-Lib not found. Installing...")
-    import subprocess
-    subprocess.check_call(["python3", '-m', 'pip', 'install', 'TA-Lib'])
-    import talib
-
+import yfinance as yf
+from rich.console import Console
+from prettytable import from_html
+import requests
+import pandas as pd
+import praw
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from newsapi import NewsApiClient
+import talib
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Market analysis tool.")
