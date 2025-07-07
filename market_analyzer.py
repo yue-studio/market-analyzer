@@ -61,7 +61,7 @@ if __name__ == "__main__":
         if topics:
             console.print("[bold green]Top 20 Hot Topics on Wallstreetbets:[/bold green]")
             for i, topic in enumerate(topics, 1):
-                console.print(f"{i}. {topic}")
+                console.print(f"{i}. [link={topic['url']}]{topic['title']}[/link]")
             console.print()
 
         if not reddit_df.empty:
@@ -100,16 +100,14 @@ if __name__ == "__main__":
             table.add_column("Neu", justify="right", style="yellow")
             table.add_column("Pos", justify="right", style="green")
             table.add_column("Compound", justify="right", style="blue")
-            table.add_column("URL", style="dim")
 
             for index, row in news_df.iterrows():
                 table.add_row(
-                    row['Title'],
+                    f"[link={row['URL']}]{row['Title']}[/link]",
                     f"{row['Neg']:.2f}",
                     f"{row['Neu']:.2f}",
                     f"{row['Pos']:.2f}",
-                    f"{row['Compound']:.2f}",
-                    row['URL']
+                    f"{row['Compound']:.2f}"
                 )
             console.print(table)
             console.print("\n[bold]Sentiment Scores Explanation:[/bold]")
@@ -126,22 +124,20 @@ if __name__ == "__main__":
         cnbc_df = analyze_cnbc_sentiment()
 
         if not cnbc_df.empty:
-            table = Table(title="CNBC News Sentiment")
+            table = Table(title="CNBC News Sentiment", row_styles=["", "dim"])
             table.add_column("Title", style="cyan")
             table.add_column("Neg", justify="right", style="red")
             table.add_column("Neu", justify="right", style="yellow")
             table.add_column("Pos", justify="right", style="green")
             table.add_column("Compound", justify="right", style="blue")
-            table.add_column("URL", style="dim")
 
             for index, row in cnbc_df.iterrows():
                 table.add_row(
-                    row['Title'],
+                    f"[link={row['URL']}]{row['Title']}[/link]",
                     f"{row['Neg']:.2f}",
                     f"{row['Neu']:.2f}",
                     f"{row['Pos']:.2f}",
-                    f"{row['Compound']:.2f}",
-                    row['URL']
+                    f"{row['Compound']:.2f}"
                 )
             console.print(table)
             console.print("\n[bold]Sentiment Scores Explanation:[/bold]")
