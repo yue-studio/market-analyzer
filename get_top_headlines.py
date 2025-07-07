@@ -9,6 +9,7 @@ import argparse
 import streamlit as st
 from news_analysis import initialize_newsapi, _get_news_articles
 from utils import console
+from rich.table import Table
 
 def run_streamlit_app(symbol=None):
     """
@@ -59,16 +60,19 @@ def run_cli(symbol=None):
             console.print("[bold yellow]No top headlines found.[/bold yellow]")
             return
 
+        table = Table(title="Top 10 News Headlines", padding=(0, 1, 1, 1))
+        table.add_column("Title", style="cyan")
+        table.add_column("Description", style="dim")
+
         if symbol:
-            console.print(f"[bold green]News for {symbol.upper()}:[/bold green]")
-        else:
-            console.print("[bold green]Top 10 News Headlines:[/bold green]")
-        for i, article in enumerate(articles, 1):
-            console.print(f"{i}. {article['title']}")
-            console.print(f"   {article['url']}")
-            if article.get('description'):
-                console.print(f"   [dim]{article.get('description')}[/dim]")
-            console.print()
+            table.title = f"News for {symbol.upper()}"
+
+        for article in articles:
+            table.add_row(
+                f"[link={article['url']}]{article['title']}[/link]",
+                article.get('description', '')
+            )
+        console.print(table)
 
     except Exception as e:
         console.print(f"[bold red]Error fetching top headlines: {e}[/bold red]")

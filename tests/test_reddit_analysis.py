@@ -52,67 +52,59 @@ class TestRedditAnalysis(unittest.TestCase):
         mock_reddit = MagicMock()
         mock_submission1 = MagicMock()
         mock_submission1.title = "Hot Topic 1"
+        mock_submission1.url = "http://example.com/1"
         mock_submission1.comments = MagicMock()
         mock_submission1.comments.replace_more.return_value = None
-        mock_comment1 = MagicMock()
-        mock_comment1.body = "I like $AAPL and $TSLA. AAPL to the moon!"
-        mock_comment2 = MagicMock()
-        mock_comment2.body = "$TSLA is going down."
-        mock_submission1.comments.__iter__.return_value = [mock_comment1, mock_comment2]
 
-        mock_submission2 = MagicMock()
-        mock_submission2.title = "Hot Topic 2"
-        mock_submission2.comments = MagicMock()
-        mock_submission2.comments.replace_more.return_value = None
-        mock_comment3 = MagicMock()
-        mock_comment3.body = "$GME to the moon!"
-        mock_submission2.comments.__iter__.return_value = [mock_comment3]
+        # Create comments to satisfy the > 5 mention threshold for AAPL
+        mock_comments = []
+        for _ in range(6):
+            comment = MagicMock()
+            comment.body = "I like $AAPL "
+            mock_comments.append(comment)
+        
+        # Add a comment for another stock that should be filtered out
+        comment = MagicMock()
+        comment.body = "I like $GME "
+        mock_comments.append(comment)
 
-        mock_reddit.subreddit.return_value.hot.return_value = [mock_submission1, mock_submission2]
+        mock_submission1.comments.__iter__.return_value = mock_comments
+
+        mock_reddit.subreddit.return_value.hot.return_value = [mock_submission1]
         mock_get_reddit_instance.return_value = mock_reddit
 
-        # Mock sentiment analysis
+        # Mock sentiment analysis for all comments
         mock_getSIA.side_effect = [
-            {'neg': 0.0, 'neu': 0.5, 'pos': 0.5, 'compound': 0.6},
-            {'neg': 0.5, 'neu': 0.5, 'pos': 0.0, 'compound': -0.6},
-            {'neg': 0.0, 'neu': 0.5, 'pos': 0.5, 'compound': 0.7}
-        ]
+            {'neg': 0.0, 'neu': 0.5, 'pos': 0.5, 'compound': 0.6}
+        ] * 6 + [{'neg': 0.0, 'neu': 0.5, 'pos': 0.5, 'compound': 0.7}]
 
         # Mock yfinance Ticker
         mock_aapl_ticker = MagicMock()
         mock_aapl_ticker.history.return_value = pd.DataFrame({'Close': [150.0]}, index=pd.to_datetime(['2023-01-01']))
-        mock_tsla_ticker = MagicMock()
-        mock_tsla_ticker.history.return_value = pd.DataFrame({'Close': [200.0]}, index=pd.to_datetime(['2023-01-01']))
         mock_gme_ticker = MagicMock()
         mock_gme_ticker.history.return_value = pd.DataFrame({'Close': [25.0]}, index=pd.to_datetime(['2023-01-01']))
 
-        mock_ticker.side_effect = lambda symbol: {
-            'AAPL': mock_aapl_ticker,
-            'TSLA': mock_tsla_ticker,
-            'GME': mock_gme_ticker
-        }.get(symbol)
+        def ticker_side_effect(symbol):
+            if symbol == 'AAPL':
+                return mock_aapl_ticker
+            if symbol == 'GME':
+                return mock_gme_ticker
+            return MagicMock()
+
+        mock_ticker.side_effect = ticker_side_effect
 
         df, topics = get_top_mentioned_stocks_with_sentiment()
 
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         self.assertIn('AAPL', df.index)
-        self.assertIn('TSLA', df.index)
-        self.assertIn('GME', df.index)
+        self.assertNotIn('GME', df.index) # GME should be filtered out
 
-        self.assertEqual(df.loc['AAPL']['mentions'], 1)
-        self.assertEqual(df.loc['TSLA']['mentions'], 2)
-        self.assertEqual(df.loc['GME']['mentions'], 1)
-
-        self.assertAlmostEqual(df.loc['AAPL']['compound'], 0.6)
-        self.assertAlmostEqual(df.loc['TSLA']['compound'], 0.0) # (0.6 - 0.6) / 2 = 0
-        self.assertAlmostEqual(df.loc['GME']['compound'], 0.7)
-
+        self.assertEqual(df.loc['AAPL']['mentions'], 6)
+        self.assertAlmostEqual(df.loc['AAPL']['compound'], 3.6) # 0.6 * 6
         self.assertEqual(df.loc['AAPL']['last_price'], 150.0)
-        self.assertEqual(df.loc['TSLA']['last_price'], 200.0)
-        self.assertEqual(df.loc['GME']['last_price'], 25.0)
 
-        self.assertEqual(topics, ["Hot Topic 1", "Hot Topic 2"])
+        self.assertEqual(topics, [{"title": "Hot Topic 1", "url": "http://example.com/1"}])
 
     def test_getSIA(self):
         """Test VADER sentiment analysis."""

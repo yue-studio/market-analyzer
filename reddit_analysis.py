@@ -58,7 +58,7 @@ def get_top_mentioned_stocks_with_sentiment():
     topics = []
 
     for submission in reddit.subreddit("wallstreetbets").hot(limit=20):
-        topics.append(submission.title)
+        topics.append({"title": submission.title, "url": submission.url})
         submission.comments.replace_more(limit=0)
         for top_level_comment in submission.comments:
             s = getSIA(top_level_comment.body.strip())
