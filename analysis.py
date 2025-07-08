@@ -56,6 +56,11 @@ class MarketAnalyzer:
         
         spx_options_df = get_spx_option_quotes()
 
+        put_ask = 0
+        put_bid = 0
+        call_bid = 0
+        call_ask = 0
+
         if spx_options_df.empty:
             console.print("[bold red]No SPX option data available for Ironfly analysis.[/bold red]")
             debug_print("Ironfly analysis skipped due to no SPX option data.")
@@ -72,16 +77,6 @@ class MarketAnalyzer:
         rounded_open = base * round(open_quote / base)
         debug_print(f"SPX Quote: {spx_quote}, Open Quote: {open_quote}, Rounded Open: {rounded_open}")
 
-        table = Table(title="Ironfly Strikes")
-        table.add_column("Action", style="cyan")
-        table.add_column("Price", justify="right", style="magenta")
-        table.add_column("Strike", justify="right", style="green")
-
-        table.add_row("Buy", f"{open_quote - self.wings:.2f}", str(rounded_open - self.wings))
-        table.add_row("Sell", f"{open_quote:.2f}", str(rounded_open))
-        table.add_row("Buy", f"{open_quote + self.wings:.2f}", str(rounded_open + self.wings))
-        console.print(table)
-
         debug_print(f"Fetching option quotes for expiration date: {expireddate}")
         
         # Retrieve option prices from the fetched DataFrame
@@ -97,8 +92,27 @@ class MarketAnalyzer:
         call_ask_row = spx_options_df[(spx_options_df['option_type'] == 'call') & (spx_options_df['strike'] == (rounded_open + self.wings))]
         call_ask = call_ask_row['ask'].iloc[0] if not call_ask_row.empty else 0
 
+        table = Table(title="Ironfly Strikes")
+        table.add_column("Action", style="cyan")
+        table.add_column("Price", justify="right", style="magenta")
+        table.add_column("Strike", justify="right", style="green")
+        table.add_column("Option Price", justify="right", style="yellow")
+
+        table.add_row("Buy", f"{open_quote - self.wings:.2f}", str(rounded_open - self.wings), f"{put_ask:.2f}")
+        table.add_row("Sell", f"{open_quote:.2f}", str(rounded_open), f"{put_bid:.2f} / {call_bid:.2f}")
+        table.add_row("Buy", f"{open_quote + self.wings:.2f}", str(rounded_open + self.wings), f"{call_ask:.2f}")
+        console.print(table)
+
+        console.print(f"Current SPX Quote: [bold green]{spx_quote:.2f}[/bold green]")
         price = put_bid + call_bid - put_ask - call_ask
         console.print(f"Ironfly Price: [bold green]${price:.2f}[/bold green]")
+        console.print("\n[bold]Ironfly Explanation:[/bold]")
+        console.print("- An Ironfly is a neutral options strategy that profits from low volatility.")
+        console.print("- It involves selling a call and a put option at the same strike price (the body) and buying a call and a put option further out-of-the-money (the wings).")
+        console.print("- The 'Ironfly Price' represents the net credit received when entering the strategy.")
+        console.print("- A positive price indicates a net credit, meaning you receive money upfront.")
+        console.print("- The maximum profit is limited to this net credit, achieved if the underlying asset closes exactly at the body strike price at expiration.")
+        console.print("- The maximum loss is limited to the difference between the body and wing strikes, minus the net credit, if the price moves beyond the breakeven points.")
         debug_print(f"Calculated Ironfly Price: {price}")
         self.results['ironfly_price'] = price
         self.results['ironfly_details'] = {
@@ -111,6 +125,7 @@ class MarketAnalyzer:
             'call_ask': call_ask,
             'expiration_date': expireddate
         }
+        console.print()
 
     def analyze_market_indicators(self):
         """
@@ -150,6 +165,7 @@ class MarketAnalyzer:
         console.print(table)
         debug_print("Market indicators analysis complete.")
         self.results['market_indicators'] = pd.DataFrame(market_indicators_data)
+        console.print()
 
     def analyze_bond_yields(self):
         """
@@ -183,6 +199,7 @@ class MarketAnalyzer:
             console.print(table)
             debug_print("Bond yields analysis complete.")
             self.results['bond_yields'] = bond_df
+            console.print()
         else:
             console.print("[bold red]No bond yield data available.[/bold red]")
             debug_print("Bond yields analysis skipped due to no data.")
@@ -221,6 +238,7 @@ class MarketAnalyzer:
         else:
             console.print(f"[bold red]Could not calculate pivot points for {self.ticker}. Not enough historical data.[/bold red]")
             debug_print("Pivot points calculation skipped due to insufficient historical data.")
+        console.print()
 
     def calculate_technical_indicators(self):
         """
@@ -317,6 +335,7 @@ class MarketAnalyzer:
         console.print("- [bold]ADX (14)[/bold]: Average Directional Index over 14 periods. Measures the strength of a trend.")
         debug_print("Technical indicators calculation complete.")
         self.results['technical_indicators'] = pd.DataFrame([tech_indicators_data])
+        console.print()
 
     def plot_vix_ratio(self, ax_vix, ax_ratio, period: str = "1y"):
         """
@@ -476,6 +495,7 @@ class MarketAnalyzer:
         else:
             console.print("[bold red]No SPX option data available.[/bold red]")
         debug_print("SPX option quotes analysis complete.")
+        console.print()
 
     def run_analysis(self):
         """
