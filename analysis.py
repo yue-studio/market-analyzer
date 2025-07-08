@@ -15,6 +15,7 @@ import os
 
 from utils import console, TICKER_MAP, find_day, debug_print
 from market_data import get_stock_info, get_historical_data, get_option_quote, get_bond_yields
+from openbb_get_spx import get_spx_option_quotes
 
 class MarketAnalyzer:
     """
@@ -27,18 +28,20 @@ class MarketAnalyzer:
         cache (dict): A simple cache to store fetched data.
     """
 
-    def __init__(self, ticker: str, wings: int):
+    def __init__(self, ticker: str, wings: int, display_spx_options: bool = False):
         """
         Initializes the MarketAnalyzer with a ticker symbol and ironfly wings width.
 
         Args:
             ticker (str): The initial ticker symbol (e.g., '$SPX.X').
             wings (int): The width of the ironfly wings.
+            display_spx_options (bool): Whether to display SPX option quotes.
         """
         self.ticker = TICKER_MAP.get(ticker, ticker)
         self.wings = wings
         self.cache = {}
         self.results = {} # Store results for export
+        self.display_spx_options = display_spx_options
         debug_print(f"MarketAnalyzer initialized with ticker: {self.ticker}, wings: {self.wings}")
 
     def analyze_ironfly(self):
@@ -49,24 +52,22 @@ class MarketAnalyzer:
         console.print("[bold cyan]Ironfly Analysis[/bold cyan]")
         debug_print("Starting ironfly analysis.")
         
-        primary_ticker = self.ticker
-        fallback_ticker = 'SPY'
+        debug_print("Starting ironfly analysis.")
+        
+        spx_options_df = get_spx_option_quotes()
 
-        debug_print(f"Attempting ironfly analysis for primary ticker: {primary_ticker}")
-        # First, try the primary ticker
-        spx_info = get_stock_info(primary_ticker)
-        expireddate, _ = find_day(primary_ticker, datetime.datetime.now(pytz.timezone('US/Pacific')).strftime("%Y-%m-%d"))
+        if spx_options_df.empty:
+            console.print("[bold red]No SPX option data available for Ironfly analysis.[/bold red]")
+            debug_print("Ironfly analysis skipped due to no SPX option data.")
+            return
 
-        # If it fails, try the fallback
-        if not expireddate:
-            console.print(f"[yellow]Could not find options for {primary_ticker}, falling back to {fallback_ticker}...[/yellow]")
-            debug_print(f"Falling back to {fallback_ticker} for ironfly analysis.")
-            spx_info = get_stock_info(fallback_ticker)
-            self.ticker = fallback_ticker # Switch the main ticker for the rest of the analysis
-            expireddate, _ = find_day(fallback_ticker, datetime.datetime.now(pytz.timezone('US/Pacific')).strftime("%Y-%m-%d"))
+        underlying_price = spx_options_df['underlying_price'].iloc[0]
+        spx_quote = underlying_price
+        open_quote = underlying_price
+        
+        # Since get_spx_option_quotes filters for dte == 0, expireddate is always today.
+        expireddate = datetime.datetime.now(pytz.timezone('US/Pacific')).strftime("%Y-%m-%d")
 
-        spx_quote = spx_info.get('regularMarketPrice', 0)
-        open_quote = spx_info.get('open', 0)
         base = 5
         rounded_open = base * round(open_quote / base)
         debug_print(f"SPX Quote: {spx_quote}, Open Quote: {open_quote}, Rounded Open: {rounded_open}")
@@ -81,30 +82,35 @@ class MarketAnalyzer:
         table.add_row("Buy", f"{open_quote + self.wings:.2f}", str(rounded_open + self.wings))
         console.print(table)
 
-        if expireddate:
-            debug_print(f"Fetching option quotes for expiration date: {expireddate}")
-            put_ask, delta1 = get_option_quote(self.ticker, 'PUT', 'ask', rounded_open - self.wings, expireddate)
-            put_bid, delta2 = get_option_quote(self.ticker, 'PUT', 'bid', rounded_open, expireddate)
-            call_bid, delta3 = get_option_quote(self.ticker, 'CALL', 'bid', rounded_open, expireddate)
-            call_ask, delta4 = get_option_quote(self.ticker, 'CALL', 'ask', rounded_open + self.wings, expireddate)
+        debug_print(f"Fetching option quotes for expiration date: {expireddate}")
+        
+        # Retrieve option prices from the fetched DataFrame
+        put_ask_row = spx_options_df[(spx_options_df['option_type'] == 'put') & (spx_options_df['strike'] == (rounded_open - self.wings))]
+        put_ask = put_ask_row['ask'].iloc[0] if not put_ask_row.empty else 0
 
-            price = put_bid + call_bid - put_ask - call_ask
-            console.print(f"Ironfly Price: [bold green]${price:.2f}[/bold green]")
-            debug_print(f"Calculated Ironfly Price: {price}")
-            self.results['ironfly_price'] = price
-            self.results['ironfly_details'] = {
-                'ticker': self.ticker,
-                'mid_strike': rounded_open,
-                'wings': self.wings,
-                'put_ask': put_ask,
-                'put_bid': put_bid,
-                'call_bid': call_bid,
-                'call_ask': call_ask,
-                'expiration_date': expireddate
-            }
-        else:
-            console.print("[bold red]Could not find a suitable expiration date for the ironfly.[/bold red]")
-            debug_print("Ironfly analysis skipped due to no suitable expiration date.")
+        put_bid_row = spx_options_df[(spx_options_df['option_type'] == 'put') & (spx_options_df['strike'] == rounded_open)]
+        put_bid = put_bid_row['bid'].iloc[0] if not put_bid_row.empty else 0
+
+        call_bid_row = spx_options_df[(spx_options_df['option_type'] == 'call') & (spx_options_df['strike'] == rounded_open)]
+        call_bid = call_bid_row['bid'].iloc[0] if not call_bid_row.empty else 0
+
+        call_ask_row = spx_options_df[(spx_options_df['option_type'] == 'call') & (spx_options_df['strike'] == (rounded_open + self.wings))]
+        call_ask = call_ask_row['ask'].iloc[0] if not call_ask_row.empty else 0
+
+        price = put_bid + call_bid - put_ask - call_ask
+        console.print(f"Ironfly Price: [bold green]${price:.2f}[/bold green]")
+        debug_print(f"Calculated Ironfly Price: {price}")
+        self.results['ironfly_price'] = price
+        self.results['ironfly_details'] = {
+            'ticker': self.ticker,
+            'mid_strike': rounded_open,
+            'wings': self.wings,
+            'put_ask': put_ask,
+            'put_bid': put_bid,
+            'call_bid': call_bid,
+            'call_ask': call_ask,
+            'expiration_date': expireddate
+        }
 
     def analyze_market_indicators(self):
         """
@@ -447,6 +453,30 @@ class MarketAnalyzer:
         debug_print("Technical indicators plot generation complete.")
         return True
 
+    def analyze_spx_options(self):
+        """
+        Fetches and displays SPX option quotes using OpenBB.
+        """
+        console.print("[bold cyan]SPX Option Quotes[/bold cyan]")
+        debug_print("Starting SPX option quotes analysis.")
+        spx_options_df = get_spx_option_quotes()
+
+        if not spx_options_df.empty:
+            table = Table(title="SPX Option Quotes")
+            # Dynamically add columns based on DataFrame columns
+            for col in spx_options_df.columns:
+                table.add_column(col.replace('_', ' ').title(), justify="right", style="magenta")
+            
+            # Add rows to the table
+            for index, row in spx_options_df.iterrows():
+                table.add_row(*[str(x) for x in row.values])
+            
+            console.print(table)
+            self.results['spx_options'] = spx_options_df
+        else:
+            console.print("[bold red]No SPX option data available.[/bold red]")
+        debug_print("SPX option quotes analysis complete.")
+
     def run_analysis(self):
         """
         Runs the full market analysis, including ironfly, market indicators, and bond yields.
@@ -457,6 +487,8 @@ class MarketAnalyzer:
         self.analyze_bond_yields()
         self.calculate_pivot_points()
         self.calculate_technical_indicators()
+        if self.display_spx_options:
+            self.analyze_spx_options()
         debug_print("Full market analysis complete.")
 
 def combine_plots_to_png(plot1_filename: str, plot2_filename: str, ticker: str, output_prefix: str = "combined_plots"):

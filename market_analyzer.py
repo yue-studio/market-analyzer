@@ -39,13 +39,14 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cnbc-analysis", action="store_true", help="Perform CNBC sentiment analysis.")
     parser.add_argument("-e", "--export-data", action="store_true", help="Export analysis results to CSV/JSON files.")
     parser.add_argument("-top", "--top-headlines", action="store_true", help="Print the top 10 news headlines.")
+    parser.add_argument("-x", "--spx-options", action="store_true", help="Display SPX option quotes.")
     args = parser.parse_args()
 
     if args.debug:
         utils.DEBUG_MODE = True
         utils.debug_print(f"Matplotlib backend: {matplotlib.get_backend()}")
 
-    analyzer = MarketAnalyzer(ticker=args.ticker, wings=args.wings)
+    analyzer = MarketAnalyzer(ticker=args.ticker, wings=args.wings, display_spx_options=args.spx_options)
 
     with Progress() as progress:
         task = progress.add_task("[green]Running analysis...[/green]", total=1)

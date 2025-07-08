@@ -5,7 +5,8 @@ This project provides a comprehensive market analysis tool written in Python. It
 ## Features
 
 - **Real-time Data Fetching:** Retrieves stock and options data using the `yfinance` library.
-- **Ironfly Options Analysis:** Calculates and displays the strikes and price for an ironfly options strategy, with a fallback to SPY if SPX options data is unavailable.
+- **Ironfly Options Analysis:** Calculates and displays the strikes and price for an ironfly options strategy using OpenBB SPX option quotes.
+- **SPX Option Quotes:** Fetches and displays real-time SPX option chain data using OpenBB.
 - **Market Indicators:** Fetches and presents volatility indices (VIX, VIX3M, VVIX, SKEW, VXN).
 - **Bond Yields:** Retrieves and displays daily average interest rates from the U.S. Treasury FiscalData API.
 - **Technical Analysis:** Calculates and displays popular technical indicators including Simple Moving Averages (SMA), Exponential Moving Averages (EMA), Relative Strength Index (RSI), and Moving Average Convergence Divergence (MACD).
@@ -95,7 +96,8 @@ python3 market_analyzer.py
 -   `-c`, `--cnbc-analysis`: Perform CNBC sentiment analysis.
 -   `-top`, `--top-headlines`: Print the top 10 news headlines.
 -   `--symbol SYMBOL`: Search for news related to a specific stock symbol (used with `get_top_headlines.py` or `--top-headlines`).
--   `-p`, `--plot-vix-ratio`: Plot VIX and VIX3M ratio.
+-   `-x`, `--spx-options`: Display SPX option quotes.
+-   `-p`, `--plot-vix-ratio`: Plot VIX and VIX3M ratio:
 -   `--vix-period VIX_PERIOD`: Historical period for VIX ratio plot (e.g., `6mo`, `1y`, `5y`).
 -   `-ta`, `--plot-ta`: Plot price and technical indicators.
 -   `--ta-period TA_PERIOD`: Historical period for TA plot (e.g., `6mo`, `1y`, `5y`).
@@ -164,6 +166,7 @@ market-analyzer/
 ├── reddit_analysis.py      # Functions for fetching and analyzing Reddit data
 ├── cnbc_analysis.py        # Functions for fetching and analyzing CNBC news
 ├── get_top_headlines.py    # Script to fetch and display top news headlines (CLI/Streamlit)
+├── openbb_get_spx.py       # Functions for fetching SPX option data using OpenBB
 └── tests/
     ├── test_analysis.py          # Unit tests for analysis.py
     ├── test_market_data.py       # Unit tests for market_data.py
