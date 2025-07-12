@@ -499,10 +499,9 @@ class MarketAnalyzer:
 
     def run_analysis(self):
         """
-        Runs the full market analysis, including ironfly, market indicators, and bond yields.
+        Runs the full market analysis, including market indicators, and bond yields.
         """
         debug_print("Starting full market analysis.")
-        self.analyze_ironfly()
         self.analyze_market_indicators()
         self.analyze_bond_yields()
         self.calculate_pivot_points()

@@ -26,7 +26,7 @@ class TestGetTopHeadlines(unittest.TestCase):
 
             mock_get_news_articles.assert_called_once_with(mock_newsapi, None, None, 10)
             
-            mock_table.assert_called_once_with(title="Top 10 News Headlines")
+            mock_table.assert_called_once_with(title="Top 10 News Headlines", padding=(0, 1, 1, 1))
             
             calls = [
                 call('Title', style='cyan'),

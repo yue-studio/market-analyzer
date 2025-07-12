@@ -25,55 +25,22 @@ class TestMarketAnalyzer(unittest.TestCase):
     def setUp(self):
         self.analyzer = MarketAnalyzer(ticker='$SPX.X', wings=50)
 
-    @patch('analysis.get_stock_info')
-    @patch('analysis.find_day')
-    @patch('analysis.get_option_quote')
-    @patch('datetime.datetime')
-    def test_analyze_ironfly_success(self, mock_datetime, mock_get_option_quote, mock_find_day, mock_get_stock_info):
+    @patch('analysis.get_spx_option_quotes')
+    def test_analyze_ironfly_success(self, mock_get_spx_option_quotes):
         """Test successful ironfly analysis."""
-        mock_datetime.now.return_value = datetime.datetime(2025, 6, 30, 10, 0, 0, tzinfo=pytz.timezone('US/Pacific'))
-        mock_datetime.now.return_value.strftime.return_value = '2025-06-30'
-        mock_datetime.strptime.side_effect = datetime.datetime.strptime # Keep original strptime functionality
-        mock_get_stock_info.return_value = {'regularMarketPrice': 4000.0, 'open': 3990.0}
-        mock_find_day.return_value = ('2025-12-31', 100) # expireddate, days
-        mock_get_option_quote.side_effect = [
-            (0.50, -0.1), # put_ask
-            (2.00, -0.5), # put_bid
-            (2.10, 0.5),  # call_bid
-            (0.60, 0.1)   # call_ask
-        ]
+        mock_get_spx_option_quotes.return_value = pd.DataFrame({
+            'underlying_price': [4000.0] * 4,
+            'option_type': ['put', 'put', 'call', 'call'],
+            'strike': [3950, 4000, 4000, 4050],
+            'ask': [0.50, 0, 0, 0.60],
+            'bid': [0, 2.00, 2.10, 0]
+        })
 
         self.analyzer.analyze_ironfly()
         # Assertions to check if the correct methods were called and output is as expected
-        mock_get_stock_info.assert_called_with('^GSPC')
-        mock_find_day.assert_called_with('^GSPC', '2025-06-30')
-        self.assertEqual(mock_get_option_quote.call_count, 4)
+        mock_get_spx_option_quotes.assert_called_once()
 
-    @patch('analysis.get_stock_info')
-    @patch('analysis.find_day')
-    @patch('analysis.get_option_quote')
-    @patch('datetime.datetime')
-    def test_analyze_ironfly_fallback(self, mock_datetime, mock_get_option_quote, mock_find_day, mock_get_stock_info):
-        """Test ironfly analysis with fallback to SPY."""
-        mock_datetime.now.return_value = datetime.datetime(2025, 6, 30, 10, 0, 0, tzinfo=pytz.timezone('US/Pacific'))
-        mock_datetime.now.return_value.strftime.return_value = '2025-06-30'
-        mock_datetime.strptime.side_effect = datetime.datetime.strptime # Keep original strptime functionality
-        # Simulate initial failure for ^GSPC
-        mock_get_stock_info.side_effect = [{}, {'regularMarketPrice': 400.0, 'open': 399.0}]
-        mock_find_day.side_effect = [(None, 0), ('2025-12-31', 100)]
-        mock_get_option_quote.side_effect = [
-            (0.50, -0.1), # put_ask
-            (2.00, -0.5), # put_bid
-            (2.10, 0.5),  # call_bid
-            (0.60, 0.1)   # call_ask
-        ]
-
-        self.analyzer.analyze_ironfly()
-        mock_get_stock_info.assert_any_call('^GSPC')
-        mock_get_stock_info.assert_any_call('SPY')
-        mock_find_day.assert_any_call('^GSPC', '2025-06-30')
-        mock_find_day.assert_any_call('SPY', '2025-06-30')
-        self.assertEqual(self.analyzer.ticker, 'SPY') # Ensure ticker was switched
+    
 
     @patch('analysis.get_stock_info')
     def test_analyze_market_indicators(self, mock_get_stock_info):

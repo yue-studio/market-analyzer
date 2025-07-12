@@ -97,6 +97,7 @@ python3 market_analyzer.py
 -   `-top`, `--top-headlines`: Print the top 10 news headlines.
 -   `--symbol SYMBOL`: Search for news related to a specific stock symbol (used with `get_top_headlines.py` or `--top-headlines`).
 -   `-x`, `--spx-options`: Display SPX option quotes.
+-   `-i`, `--ironfly`: Perform Ironfly analysis.
 -   `-p`, `--plot-vix-ratio`: Plot VIX and VIX3M ratio:
 -   `--vix-period VIX_PERIOD`: Historical period for VIX ratio plot (e.g., `6mo`, `1y`, `5y`).
 -   `-ta`, `--plot-ta`: Plot price and technical indicators.
@@ -115,6 +116,11 @@ python3 market_analyzer.py
 -   Analyze Apple (AAPL) with custom ironfly wings:
     ```bash
     python3 market_analyzer.py --ticker AAPL --wings 10
+    ```
+
+-   Perform Ironfly analysis:
+    ```bash
+    python3 market_analyzer.py -i
     ```
 
 -   Perform Reddit sentiment analysis:

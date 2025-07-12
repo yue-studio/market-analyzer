@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--export-data", action="store_true", help="Export analysis results to CSV/JSON files.")
     parser.add_argument("-top", "--top-headlines", action="store_true", help="Print the top 10 news headlines.")
     parser.add_argument("-x", "--spx-options", action="store_true", help="Display SPX option quotes.")
+    parser.add_argument("-i", "--ironfly", action="store_true", help="Perform Ironfly analysis.")
     args = parser.parse_args()
 
     if args.debug:
@@ -52,6 +53,9 @@ if __name__ == "__main__":
         task = progress.add_task("[green]Running analysis...[/green]", total=1)
         analyzer.run_analysis()
         progress.update(task, advance=1)
+
+    if args.ironfly:
+        analyzer.analyze_ironfly()
 
     if args.reddit_analysis:
         console.print("[bold cyan]Reddit Sentiment Analysis[/bold cyan]")
